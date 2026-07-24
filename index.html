@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +17,7 @@
         
         .container { width: 100%; max-width: 1000px; padding: 20px; display: flex; flex-direction: column; align-items: center; flex-grow: 1; justify-content: center; }
         
-        /* कनेक्शन बॉक्स */
+        /* Connection Box */
         .join-box { background: #1e1e1e; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); text-align: center; width: 100%; max-width: 400px; }
         .join-box h3 { margin-bottom: 10px; font-size: 24px; }
         .join-box p { margin-bottom: 20px; color: #aaa; font-size: 14px; }
@@ -26,20 +26,20 @@
         .btn-connect { width: 100%; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 8px; border: none; background: #28a745; color: white; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 10px; }
         .btn-connect:hover { background: #218838; }
         
-        /* ऑडियो कॉल शुरू करने का अलग बटन */
+        /* Audio Call Button */
         .btn-audio-connect { background: #17a2b8; }
         .btn-audio-connect:hover { background: #138496; }
 
         #status { margin-top: 15px; font-size: 14px; font-weight: bold; color: #ff4d4d; }
 
-        /* वीडियो एरिया */
+        /* Video Area */
         .video-area { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; }
         .video-wrapper { position: relative; width: 100%; max-width: 900px; background: #000; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.6); aspect-ratio: 16/9; display: flex; justify-content: center; align-items: center; }
         #remoteVideo { width: 100%; height: 100%; object-fit: cover; }
         
         #localVideo { position: absolute; bottom: 20px; right: 20px; width: 150px; height: 200px; object-fit: cover; background: #222; border-radius: 10px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10; transition: 0.3s; }
 
-        /* कंट्रोल बटन्स */
+        /* Controls */
         .controls { display: flex; gap: 20px; margin-top: 25px; background: #1e1e1e; padding: 15px 30px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); flex-wrap: wrap; justify-content: center; }
         .ctrl-btn { width: 55px; height: 55px; border-radius: 50%; border: none; background: #333; color: white; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.3s; }
         .ctrl-btn:hover { background: #444; }
@@ -48,7 +48,7 @@
         .btn-end:hover { background: #cc0000; }
         .ctrl-btn .material-icons { font-size: 28px; }
 
-        /* मोबाइल रेस्पॉन्सिव */
+        /* Mobile Responsive */
         @media (max-width: 768px) {
             .video-wrapper { aspect-ratio: 3/4; border-radius: 10px; }
             #localVideo { width: 100px; height: 140px; bottom: 15px; right: 15px; }
@@ -66,10 +66,10 @@
     </header>
 
     <div class="container">
-        <!-- कनेक्शन बॉक्स -->
+        <!-- Connection Box -->
         <div class="join-box" id="joinBox">
-            <h3>सुरक्षित कॉलिंग</h3>
-            <p>कनेक्ट होने के लिए 6-Digit कोड डालें</p>
+            <h3>Secure Calling</h3>
+            <p>Enter 6-Digit code to connect</p>
             <input type="number" id="roomCode" placeholder="123456" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);" maxlength="6">
             
             <button class="btn-connect" onclick="connectToServer(false)">
@@ -81,7 +81,7 @@
             <p id="status">🔴 Not connected</p>
         </div>
 
-        <!-- वीडियो एरिया और कंट्रोल्स -->
+        <!-- Video Area and Controls -->
         <div class="video-area" id="videoArea">
             <div class="video-wrapper">
                 <video id="remoteVideo" autoplay playsinline></video>
@@ -115,7 +115,7 @@
         let localStream;
         let peerConnection;
         let currentRoomCode;
-        let useFrontCamera = true; // डिफॉल्ट फ्रंट कैमरा
+        let useFrontCamera = true; // Default front camera
 
         const servers = {
             iceServers: [
@@ -123,7 +123,7 @@
             ]
         };
 
-        // 1. कैमरा/माइक चालू करना
+        // 1. Start Camera/Mic
         async function startCamera(audioOnly = false) {
             try {
                 const constraints = {
@@ -134,7 +134,7 @@
                 
                 const localVideoElement = document.getElementById('localVideo');
                 if (audioOnly) {
-                    localVideoElement.style.display = 'none'; // ऑडियो कॉल होने पर खुद का वीडियो बॉक्स छुपा दें
+                    localVideoElement.style.display = 'none'; // Hide local video if audio only
                     document.getElementById('camIcon').innerText = 'videocam_off';
                     document.getElementById('camBtn').classList.add('disabled');
                 } else {
@@ -142,20 +142,20 @@
                     localVideoElement.srcObject = localStream;
                 }
             } catch (error) {
-                console.error("कैमरा एरर:", error);
-                alert("कैमरा और माइक की परमिशन दें!");
+                console.error("Camera error:", error);
+                alert("Please grant camera and microphone permissions!");
             }
         }
-        startCamera(false); // शुरुआत में नॉर्मल कैमरा चालू करें
+        startCamera(false); // Start with normal camera initially
 
-        // 2. सर्वर से कनेक्ट करना
+        // 2. Connect to Server
         function connectToServer(audioOnly = false) {
             const code = document.getElementById('roomCode').value;
             if(code.length === 6) {
                 currentRoomCode = code;
                 socket.emit('join_room', code);
                 
-                // अगर यूजर ने ऑडियो कॉल चुना है, तो वीडियो ट्रैक बंद कर दें
+                // If audio call chosen, disable video track
                 if (audioOnly && localStream) {
                     const videoTrack = localStream.getVideoTracks()[0];
                     if (videoTrack) videoTrack.enabled = false;
@@ -166,15 +166,15 @@
                 
                 socket.emit('call_request', { roomCode: code });
             } else {
-                alert('कृपया 6 अंकों का सही कोड डालें!');
+                alert('Please enter a valid 6-digit code!');
             }
         }
 
-        // 3. फ्रंट और बैक कैमरा बदलना (Switch Camera)
+        // 3. Switch Front/Back Camera
         async function switchCamera() {
-            useFrontCamera = !useFrontCamera; // कैमरा की दिशा बदलें
+            useFrontCamera = !useFrontCamera; // Toggle camera direction
             if (localStream) {
-                localStream.getTracks().forEach(track => track.stop()); // पुराने ट्रैक्स बंद करें
+                localStream.getTracks().forEach(track => track.stop()); // Stop old tracks
             }
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({
@@ -183,7 +183,7 @@
                 });
                 document.getElementById('localVideo').srcObject = localStream;
 
-                // अगर कॉल चल रही है, तो लाइव कनेक्शन में नया वीडियो ट्रैक अपडेट करें
+                // Update video track in live connection if call is ongoing
                 if (peerConnection) {
                     const videoSender = peerConnection.getSenders().find(sender => sender.track && sender.track.kind === 'video');
                     if (videoSender) {
@@ -192,12 +192,12 @@
                     }
                 }
             } catch (err) {
-                console.error("कैमरा स्विच करने में समस्या:", err);
-                alert("यह डिवाइस बैक कैमरा सपोर्ट नहीं कर रहा है या परमिशन नहीं है!");
+                console.error("Camera switch error:", err);
+                alert("This device does not support a back camera or permission is denied!");
             }
         }
 
-        // 4. WebRTC कनेक्शन
+        // 4. WebRTC Connection
         function createPeerConnection() {
             peerConnection = new RTCPeerConnection(servers);
             
@@ -214,18 +214,20 @@
                     socket.emit('webrtc_signal', { roomCode: currentRoomCode, type: 'candidate', candidate: event.candidate });
                 }
             };
-            // कॉल कटने की पहचान करने के लिए
+
+            // Detect when the other user disconnects
             peerConnection.oniceconnectionstatechange = () => {
                 if (peerConnection.iceConnectionState === 'disconnected' || 
                     peerConnection.iceConnectionState === 'failed' || 
                     peerConnection.iceConnectionState === 'closed') {
                     
+                    // Refresh page to go back to home screen
                     window.location.reload(); 
                 }
             };
         }
 
-        // 5. सिग्नल्स हैंडलिंग
+        // 5. Signal Handling
         socket.on('incoming_call', async (data) => {
             createPeerConnection();
             const offer = await peerConnection.createOffer();
@@ -248,7 +250,7 @@
             }
         });
 
-        // 6. कंट్రోल्स फंक्शन्स (Mute, Video Toggle, End Call)
+        // 6. Controls (Mute, Video Toggle, End Call)
         function toggleAudio() {
             const audioTrack = localStream.getAudioTracks()[0];
             if(audioTrack) {
@@ -265,7 +267,7 @@
                 document.getElementById('camIcon').innerText = videoTrack.enabled ? 'videocam' : 'videocam_off';
                 document.getElementById('camBtn').classList.toggle('disabled');
             } else {
-                alert("वीडियो ट्रैक उपलब्ध नहीं है!");
+                alert("Video track not available!");
             }
         }
 
