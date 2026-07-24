@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid Calling App</title>
+    <!-- Socket.io -->
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <!-- Material Icons (बटन्स के डिज़ाइन के लिए) -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <style>
+        /* CSS - डिज़ाइन और मोबाइल रेस्पॉन्सिव लेआउट */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #ffffff; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        
+        header { width: 100%; padding: 15px 20px; background-color: #1e1e1e; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.5); font-size: 22px; font-weight: bold; color: #28a745; }
+        
+        .container { width: 100%; max-width: 1000px; padding: 20px; display: flex; flex-direction: column; align-items: center; flex-grow: 1; justify-content: center; }
+        
+        /* कनेक्शन बॉक्स की डिज़ाइन */
+        .join-box { background: #1e1e1e; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); text-align: center; width: 100%; max-width: 400px; }
+        .join-box h3 { margin-bottom: 10px; font-size: 24px; }
+        .join-box p { margin-bottom: 20px; color: #aaa; font-size: 14px; }
+        .join-box input { width: 100%; padding: 15px; font-size: 24px; text-align: center; letter-spacing: 8px; border-radius: 8px; border: 2px solid #333; background: #2c2c2c; color: white; outline: none; margin-bottom: 20px; transition: 0.3s; }
+        .join-box input:focus { border-color: #28a745; }
+        .btn-connect { width: 100%; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 8px; border: none; background: #28a745; color: white; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn-connect:hover { background: #218838; }
+        #status { margin-top: 15px; font-size: 14px; font-weight: bold; color: #ff4d4d; }
+
+        /* वीडियो एरिया की डिज़ाइन */
+        .video-area { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; }
+        .video-wrapper { position: relative; width: 100%; max-width: 900px; background: #000; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.6); aspect-ratio: 16/9; display: flex; justify-content: center; align-items: center; }
+        #remoteVideo { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* आपका अपना वीडियो (छोटा बॉक्स) */
+        #localVideo { position: absolute; bottom: 20px; right: 20px; width: 150px; height: 200px; object-fit: cover; background: #222; border-radius: 10px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10; transition: 0.3s; }
+
+        /* कंट्रोल बटन्स (Mute, Video, End) */
+        .controls { display: flex; gap: 25px; margin-top: 25px; background: #1e1e1e; padding: 15px 35px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .ctrl-btn { width: 55px; height: 55px; border-radius: 50%; border: none; background: #333; color: white; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.3s; }
+        .ctrl-btn:hover { background: #444; }
+        .ctrl-btn.disabled { background: #fff; color: #333; }
+        .btn-end { background: #ff4d4d; }
+        .btn-end:hover { background: #cc0000; }
+        .ctrl-btn .material-icons { font-size: 28px; }
+
+        /* मोबाइल स्क्रीन के लिए बदलाव (Responsive) */
+        @media (max-width: 768px) {
+            .video-wrapper { aspect-ratio: 3/4; border-radius: 10px; }
+            #localVideo { width: 100px; height: 140px; bottom: 15px; right: 15px; border-width: 1px; }
+            .controls { gap: 15px; padding: 12px 25px; }
+            .ctrl-btn { width: 50px; height: 50px; }
+            .ctrl-btn .material-icons { font-size: 24px; }
+            .join-box input { font-size: 20px; letter-spacing: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        Hybrid Call
+    </header>
+
+    <div class="container">
+        <!-- कनेक्शन बॉक्स -->
+        <div class="join-box" id="joinBox">
+            <h3>सुरक्षित कॉलिंग</h3>
+            <p>कनेक्ट होने के लिए 6-Digit का कोड डालें</p>
+            <input type="number" id="roomCode" placeholder="123456" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);" maxlength="6">
+            <button class="btn-connect" onclick="connectToServer()">
+                <span class="material-icons">video_call</span> Connect
+            </button>
+            <p id="status">🔴 Not connected</p>
+        </div>
+
+        <!-- वीडियो और कंट्रोल्स बॉक्स -->
+        <div class="video-area" id="videoArea">
+            <div class="video-wrapper">
+                <video id="remoteVideo" autoplay playsinline></video>
+                <video id="localVideo" autoplay muted playsinline></video>
+            </div>
+            
+            <div class="controls">
+                <button class="ctrl-btn" id="micBtn" onclick="toggleAudio()">
+                    <span class="material-icons" id="micIcon">mic</span>
+                </button>
+                <button class="ctrl-btn btn-end" onclick="endCall()">
+                    <span class="material-icons">call_end</span>
+                </button>
+                <button class="ctrl-btn" id="camBtn" onclick="toggleVideo()">
+                    <span class="material-icons" id="camIcon">videocam</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ⚠️ यहाँ अपना Railway का लिंक पेस्ट करें ⚠️ ---
+        const socket = io('hybride-calling-server-production.up.railway.app');
+        
+        let localStream;
+        let peerConnection;
+        let currentRoomCode;
+
+        const servers = {
+            iceServers: [
+                { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }
+            ]
+        };
+
+        // 1. कैमरा चालू करना
+        async function startCamera() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('localVideo').srcObject = localStream;
+            } catch (error) {
+                console.error("कैमरा एरर:", error);
+                alert("कैमरा और माइक की परमिशन दें!");
+            }
+        }
+        startCamera();
+
+        // 2. सर्वर से कनेक्ट करना और UI बदलना
+        function connectToServer() {
+            const code = document.getElementById('roomCode').value;
+            if(code.length === 6) {
+                currentRoomCode = code;
+                socket.emit('join_room', code);
+                
+                // UI में बदलाव (बॉक्स छुपाना और वीडियो दिखाना)
+                document.getElementById('joinBox').style.display = 'none';
+                document.getElementById('videoArea').style.display = 'flex';
+                
+                socket.emit('call_request', { roomCode: code });
+            } else {
+                alert('कृपया 6 अंकों का सही कोड डालें!');
+            }
+        }
+
+        // 3. WebRTC कनेक्शन
+        function createPeerConnection() {
+            peerConnection = new RTCPeerConnection(servers);
+            
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+
+            peerConnection.ontrack = (event) => {
+                document.getElementById('remoteVideo').srcObject = event.streams[0];
+            };
+
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('webrtc_signal', { roomCode: currentRoomCode, type: 'candidate', candidate: event.candidate });
+                }
+            };
+        }
+
+        // 4. सिग्नल्स
+        socket.on('incoming_call', async (data) => {
+            createPeerConnection();
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socket.emit('webrtc_signal', { roomCode: data.roomCode, type: 'offer', offer: offer });
+        });
+
+        socket.on('webrtc_signal', async (data) => {
+            if(!peerConnection) createPeerConnection();
+
+            if (data.type === 'offer') {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                socket.emit('webrtc_signal', { roomCode: data.roomCode, type: 'answer', answer: answer });
+            } else if (data.type === 'answer') {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+            } else if (data.type === 'candidate') {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+            }
+        });
+
+        // 5. नए फीचर्स के फंक्शन्स (Mute, Video Off, End Call)
+        function toggleAudio() {
+            const audioTrack = localStream.getAudioTracks()[0];
+            if(audioTrack) {
+                audioTrack.enabled = !audioTrack.enabled;
+                document.getElementById('micIcon').innerText = audioTrack.enabled ? 'mic' : 'mic_off';
+                document.getElementById('micBtn').classList.toggle('disabled');
+            }
+        }
+
+        function toggleVideo() {
+            const videoTrack = localStream.getVideoTracks()[0];
+            if(videoTrack) {
+                videoTrack.enabled = !videoTrack.enabled;
+                document.getElementById('camIcon').innerText = videoTrack.enabled ? 'videocam' : 'videocam_off';
+                document.getElementById('camBtn').classList.toggle('disabled');
+            }
+        }
+
+        function endCall() {
+            // कॉल काटने पर पेज को रीफ्रेश कर देगा जिससे सब कुछ क्लीन हो जाएगा
+            window.location.reload();
+        }
+    </script>
+</body>
+</html>
