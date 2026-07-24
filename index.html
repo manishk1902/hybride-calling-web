@@ -214,6 +214,15 @@
                     socket.emit('webrtc_signal', { roomCode: currentRoomCode, type: 'candidate', candidate: event.candidate });
                 }
             };
+            // कॉल कटने की पहचान करने के लिए
+            peerConnection.oniceconnectionstatechange = () => {
+                if (peerConnection.iceConnectionState === 'disconnected' || 
+                    peerConnection.iceConnectionState === 'failed' || 
+                    peerConnection.iceConnectionState === 'closed') {
+                    
+                    window.location.reload(); 
+                }
+            };
         }
 
         // 5. सिग्नल्स हैंडलिंग
